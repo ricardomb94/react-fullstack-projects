@@ -27,3 +27,21 @@ export async function listAllPostsByAuthor(author, options) {
 export async function listPostsByTag(tags, options) {
   return await listPosts({ tags }, options)
 }
+
+//define a getPostById function
+export async function getPostById(postId) {
+  return await Post.findById(postId)
+}
+//It may seem a bit trivial to define a service function that just calls Post.findById, but it is good practice to define it anyway. Later, we may want to add some additional restrictions, such as access control. Having the service function allows us to change it only in one place and we do not have to worry about forgetting to add it somewhere. Another benefit is that if we, for example, want to change the database provider later, the developer only needs to worry about getting the service functions working again, and they can be verified with the test cases.
+
+//define the updatePost function. It will take an ID of an existing post, and an object of parameters to be updated. We are going to use the findOneAndUpdate function from Mongoose, together with the $set operator, to change the specified parameters. As a third argument, we provide an options object with new: true so that the function returns the modified object instead of the original:
+export async function updatePost(postId, { title, author, contents, tags }) {
+  return await Post.findOneAndUpdate(
+    { _id: postId },
+    { $set: { title: title, author: author, contents: contents, tags: tags } },
+    { new: true },
+  )
+}
+export async function deletePost(postId) {
+  return await Post.deleteOne({ _id: postId })
+}

@@ -5,6 +5,9 @@ import {
   listAllPosts,
   listAllPostsByAuthor,
   listPostsByTag,
+  getPostById,
+  updatePost,
+  deletePost,
 } from '../services/posts.js'
 import { Post } from '../db/models/post.js'
 
@@ -67,7 +70,7 @@ const samplePosts = [
   },
   { title: 'Guide to TypeScript' },
 ]
-
+////////////////////////////  Sample Post  ////////////////////////////////////
 //Now, define an empty array, which will be populated with the created posts.
 let createdSamplePosts = []
 
@@ -135,3 +138,67 @@ describe('listing posts', () => {
 })
 
 //Run the tests and watch them all pass:
+
+//tests for getting a post by ID and failing to get a post because the ID did not exist in the database:
+describe('getting a post', () => {
+  test('should return the full post ', async () => {
+    const post = await getPostById(createdSamplePosts[0]._id)
+    expect(post.toObject()).toEqual(createdSamplePosts[0].toObject())
+  })
+  test('should fail if the id does not exist', async () => {
+    const post = await getPostById('000000000000000000000000')
+    expect(post).toEqual(null)
+  })
+})
+//Note : In the first test, we use.toObject() to convert the Mongoose object with all its internal properties and metadata to a plain old JavaScript object (POJO) so that we can compare it to the sample post object by comparing all properties.
+
+//tests for updating a post successfully. We add one test to verify that the specified property was changed and another test to verify that it does not interfere with other properties:
+describe('updating a posts', () => {
+  test('should update the specified property', async () => {
+    await updatePost(createdSamplePosts[0]._id, {
+      author: 'Test author',
+    })
+    const updatedPost = await Post.findById(createdSamplePosts[0]._id)
+    expect(updatedPost.author).toEqual('Test author')
+  })
+  test('should not update other properties', async () => {
+    await updatePost(createdSamplePosts[0]._id, {
+      author: 'Test author',
+    })
+    const updatedPost = await Post.findById(createdSamplePosts[0]._id)
+    expect(updatedPost.title).toEqual('Learning Redux')
+  })
+})
+
+//Additionally, add a test to ensure the updatedAt timestamp was updated. To do so, first convert the Date objects to numbers by using .getTime(), and then we can compare them by using the expect(…).toBeGreaterThan(…) matcher:
+test('should update the updateAt timestamp', async () => {
+  await updatePost(createdSamplePosts[0]._id, {
+    author: 'Test author',
+  })
+  const updatedPost = await Post.findById(createdSamplePosts[0]._id)
+  expect(updatedPost.updatedAt.getTime()).toBeGreaterThan(
+    createdSamplePosts[0].updatedAt.getTime(),
+  )
+})
+
+//Also add a failing test to see if the updatePost function returns null when no post with a matching ID was found:
+test('should fail if the id does not exist', async () => {
+  const post = await updatePost('000000000000000000000000', {
+    author: 'Test author',
+  })
+  expect(post).toEqual(null)
+})
+
+//Then, add tests for successful and unsuccessful deletes by checking if the post was deleted and verifying the returned deletedCount:
+describe('deleting posts', () => {
+  test('should remove the post from the database', async () => {
+    const result = await deletePost(createdSamplePosts[0]._id)
+    expect(result.deletedCount).toEqual(1)
+    const deletedPost = await Post.findById(createdSamplePosts[0]._id)
+    expect(deletedPost).toEqual(null)
+  })
+  test('should fail if the id does not exist', async () => {
+    const result = await deletePost('000000000000000000000000')
+    expect(result.deletedCount).toEqual(0)
+  })
+})
