@@ -1,9 +1,11 @@
 {
-    "root" :true,
-    "env": {
-        "browser": true
-      },
-      "parserOptions": {
+  "root": true,
+  "env": {
+    "node": true,
+    "es6": true,
+    "browser": true
+  },
+  "parserOptions": {
     "ecmaVersion": "latest",
     "sourceType": "module"
   },
